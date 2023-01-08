@@ -1,0 +1,146 @@
+library(pdftables)
+library(tidyverse)
+library(readr)
+library(dplyr)
+
+setwd("~/Desktop/SNAPAnalysis/data_Prep")
+
+#Here I converted the SNAP-Farmers-Markets-Redemptions-13.19.pdf (found in the data_Prep folder) to SNAP_Redemptions_2013vs2019.csv using an API key
+convert_pdf("SNAP-Farmers-Markets-Redemptions-13.19.pdf", "SNAP_Redemptions_2013vs2019.csv", api_key = "8ow6ri5en3vl")
+
+#Here I converted the SNAPDataPersonsByState.pdf (found in the data_Prep folder) to SNAP_ParticipantsSep2019vsSep2020.csv using an API key
+convert_pdf("SNAPDataPersonsByState.pdf", "SNAP_ParticipantsSep2019vsSep2020.csv", api_key = "8ow6ri5en3vl")
+
+#Here I read in the SNAP redemptions data I converted above and change the formatting to change column names/make data usable
+SNAP_Redemptions_2013vs2019 <- read.csv("SNAP_Redemptions_2013vs2019.csv",
+                                  header = TRUE,
+                                  skip = 1,
+                                  col.names = c("State", "FY2013_SNAP_Authorized_Markets", "FY2019_SNAP_Authorized_Markets", "Percent_Change_SNAP_Authorized", "FY2013SNAP_Redemptions", "FY2019SNAPRedemptions", "Percent_Change_SNAP_Redemptions"))
+
+#We need to delete the last 3 rows, and take away the dollar signs/commas.
+SNAP_Redemptions_2013vs2019 <- SNAP_Redemptions_2013vs2019[-c(54, 55, 56), ]
+SNAP_Redemptions_2013vs2019$Percent_Change_SNAP_Authorized <- as.numeric(gsub("%", "", SNAP_Redemptions_2013vs2019$Percent_Change_SNAP_Authorized))
+SNAP_Redemptions_2013vs2019$Percent_Change_SNAP_Redemptions <- as.numeric(gsub("%", "", SNAP_Redemptions_2013vs2019$Percent_Change_SNAP_Redemptions))
+SNAP_Redemptions_2013vs2019$FY2013_SNAP_Authorized_Markets <- as.numeric(SNAP_Redemptions_2013vs2019$FY2013_SNAP_Authorized_Markets)
+SNAP_Redemptions_2013vs2019$FY2019_SNAP_Authorized_Markets <- as.numeric(SNAP_Redemptions_2013vs2019$FY2019_SNAP_Authorized_Markets)
+SNAP_Redemptions_2013vs2019$FY2013SNAP_Redemptions <- as.numeric(gsub("[\\$,]", "", SNAP_Redemptions_2013vs2019$FY2013SNAP_Redemptions))
+SNAP_Redemptions_2013vs2019$FY2019SNAPRedemptions <- as.numeric(gsub("[\\$,]", "", SNAP_Redemptions_2013vs2019$FY2019SNAPRedemptions))
+
+#Typo in Louisiana, editing the spelling here
+SNAP_Redemptions_2013vs2019$State[20] = "Louisiana"
+
+#Here I read in the SNAP participants data I converted above and change the formatting to change column names/make data usable
+SNAP_ParticipantsSep2019vsSep2020 <- read.csv("SNAP_ParticipantsSep2019vsSep2020.csv",
+                              header = TRUE,
+                              skip = 5,
+                              col.names = c("State", "SNAP_Recipients_Sep2019", "DELETE1", "SNAP_Recipients_Sep2020", "DELETE2", "Percent_Change_Sep19vsSep20"))
+
+#We are only using certain columns and focusing on September 2019 and September 2020 for this data, so we delete the other columns in the lines below
+#We also take out the commas, and convert the data to numeric values.
+SNAP_ParticipantsSep2019vsSep2020$DELETE1 <- NULL
+SNAP_ParticipantsSep2019vsSep2020$DELETE2 <- NULL
+SNAP_ParticipantsSep2019vsSep2020$SNAP_Recipients_Sep2019 <- as.numeric(gsub(",", "", SNAP_ParticipantsSep2019vsSep2020$SNAP_Recipients_Sep2019))
+SNAP_ParticipantsSep2019vsSep2020$SNAP_Recipients_Sep2020 <- as.numeric(gsub(",", "", SNAP_ParticipantsSep2019vsSep2020$SNAP_Recipients_Sep2020))
+SNAP_ParticipantsSep2019vsSep2020$Percent_Change_Sep19vsSep20 <- as.numeric(gsub("%", "", SNAP_ParticipantsSep2019vsSep2020$Percent_Change_Sep19vsSep20))
+
+#Here I changed all of the state abbreviations in SNAP_Redemptions_2013vs2019.csv to the full state name
+#so I could join the redemption and participants data to create one cohesive dataset
+SNAP_Redemptions_2013vs2019$State[1] = "Alabama"
+SNAP_Redemptions_2013vs2019$State[2] = "Alaska"
+SNAP_Redemptions_2013vs2019$State[3] = "Arkansas"
+SNAP_Redemptions_2013vs2019$State[4] = "Arizona"
+SNAP_Redemptions_2013vs2019$State[5] = "California"
+SNAP_Redemptions_2013vs2019$State[6] = "Colorado"
+SNAP_Redemptions_2013vs2019$State[7] = "Connecticut"
+SNAP_Redemptions_2013vs2019$State[8] = "District of Columbia"
+SNAP_Redemptions_2013vs2019$State[9] = "Delaware"
+SNAP_Redemptions_2013vs2019$State[10] = "Florida"
+SNAP_Redemptions_2013vs2019$State[11] = "Georgia"
+SNAP_Redemptions_2013vs2019$State[12] = "Guam"
+SNAP_Redemptions_2013vs2019$State[13] = "Hawaii"
+SNAP_Redemptions_2013vs2019$State[14] = "Iowa"
+SNAP_Redemptions_2013vs2019$State[15] = "Idaho"
+SNAP_Redemptions_2013vs2019$State[16] = "Illinois"
+SNAP_Redemptions_2013vs2019$State[17] = "Indiana"
+SNAP_Redemptions_2013vs2019$State[18] = "Kansas"
+SNAP_Redemptions_2013vs2019$State[19] = "Kentucky"
+SNAP_Redemptions_2013vs2019$State[20] = "Louisiana"
+SNAP_Redemptions_2013vs2019$State[21] = "Massachusetts"
+SNAP_Redemptions_2013vs2019$State[22] = "Maryland"
+SNAP_Redemptions_2013vs2019$State[23] = "Maine"
+SNAP_Redemptions_2013vs2019$State[24] = "Michigan"
+SNAP_Redemptions_2013vs2019$State[25] = "Minnesota"
+SNAP_Redemptions_2013vs2019$State[26] = "Missouri"
+SNAP_Redemptions_2013vs2019$State[27] = "Mississippi"
+SNAP_Redemptions_2013vs2019$State[28] = "Montana"
+SNAP_Redemptions_2013vs2019$State[29] = "North Carolina"
+SNAP_Redemptions_2013vs2019$State[30] = "North Dakota"
+SNAP_Redemptions_2013vs2019$State[31] = "Nebraska"
+SNAP_Redemptions_2013vs2019$State[32] = "New Hampshire"
+SNAP_Redemptions_2013vs2019$State[33] = "New Jersey"
+SNAP_Redemptions_2013vs2019$State[34] = "New Mexico"
+SNAP_Redemptions_2013vs2019$State[35] = "Nevada"
+SNAP_Redemptions_2013vs2019$State[36] = "New York"
+SNAP_Redemptions_2013vs2019$State[37] = "Ohio"
+SNAP_Redemptions_2013vs2019$State[38] = "Oklahoma"
+SNAP_Redemptions_2013vs2019$State[39] = "Oregon"
+SNAP_Redemptions_2013vs2019$State[40] = "Pennsylvania"
+SNAP_Redemptions_2013vs2019$State[41] = "Rhode Island"
+SNAP_Redemptions_2013vs2019$State[42] = "South Carolina"
+SNAP_Redemptions_2013vs2019$State[43] = "South Dakota"
+SNAP_Redemptions_2013vs2019$State[44] = "Tennessee"
+SNAP_Redemptions_2013vs2019$State[45] = "Texas"
+SNAP_Redemptions_2013vs2019$State[46] = "Utah"
+SNAP_Redemptions_2013vs2019$State[47] = "Virginia"
+SNAP_Redemptions_2013vs2019$State[48] = "Virgin Islands"
+SNAP_Redemptions_2013vs2019$State[49] = "Vermont"
+SNAP_Redemptions_2013vs2019$State[50] = "Washington"
+SNAP_Redemptions_2013vs2019$State[51] = "Wisconsin"
+SNAP_Redemptions_2013vs2019$State[52] = "West Virginia"
+SNAP_Redemptions_2013vs2019$State[53] = "Wyoming"
+
+#Here I joined the SNAP_ParticipantsSep2019vsSep2020.csv and SNAP_Redemptions2013vs2019 data by the
+#column and created SNAP_and_Market_data
+SNAP_and_Market_data = inner_join(SNAP_ParticipantsSep2019vsSep2020, SNAP_Redemptions_2013vs2019, by = "State")
+
+#Here I added the columns:
+#SNAP_Recipient_Changes [SNAP_Recipients_Sep2020-SNAP_Recipients_Sep2019];
+#Approved_Markets_Changes [FY2019_Authorized_Farmers.Markets - FY2013_Authorized_Farmers.Markets];
+#SNAP_Redemptions_Changes [FY2019SNAPRedemptions - FY2013SNAPRedemptions]
+#to the SNAP_and_Market_data created above
+SNAP_and_Market_data = SNAP_and_Market_data %>%
+  group_by(State) %>%
+  mutate(SNAP_Recipient_Changes = SNAP_Recipients_Sep2020 - SNAP_Recipients_Sep2019,
+         Approved_Markets_Changes = FY2019_SNAP_Authorized_Markets - FY2013_SNAP_Authorized_Markets,
+         SNAP_Redemptions_Changes = FY2019SNAPRedemptions - FY2013SNAP_Redemptions)
+
+#Here I set the wd to the data_Prep folder
+setwd("~/Desktop/SNAPAnalysis/data_Prep")
+
+#Here I wrote the stateData csv file for reproducibility purposes into the data_Prep folder. The data is previously loaded in R.
+write.csv(stateData, "stateData.csv", row.names = FALSE)
+
+#Here I merged the SNAP_and_Market_data with the stateData in R to add in the area columns, state abbreviation columns, and state region to the SNAP_and_Market_data
+SNAP_and_Market_data = merge(SNAP_and_Market_data, stateData, by.x = "State", by.y = "stateFull", all.x = TRUE)
+
+#Here I took out the rows that corresponded to territories, not states.
+SNAP_and_Market_data <- SNAP_and_Market_data[-c(9, 12, 48), ]
+
+#Here, I added another dataset called statePopulations (retrieved from https://www.census.gov/newsroom/press-kits/2019/national-state-estimates.html)
+#I limited it to just the state names and the 2019 population estimate data
+library(readxl)
+statePopulations <- read_excel("~/Desktop/SNAPAnalysis/data_Prep/nst-est2019-01.xlsx",
+                               col_names = c("State", "population"),
+                               col_types = c("text", "skip", "skip", "skip", "skip", "skip",
+                                             "skip", "skip", "skip", "skip", "numeric"),
+                               skip = 1, n_max = 50)
+
+#Here, I took out the periods at the start of the State names
+statePopulations$State <- gsub("[.]", "", statePopulations$State)
+
+#Then, I added the new population data to the SNAP and Market Data.
+SNAP_and_Market_data = inner_join(SNAP_and_Market_data, statePopulations, by = "State")
+
+#Here I wrote the .csv file of SNAP_and_Market_data and added it to the inst folder
+setwd("~/Desktop/SNAPAnalysis/inst")
+write.csv(SNAP_and_Market_data, "SNAP_and_Market_data.csv", row.names = FALSE)
